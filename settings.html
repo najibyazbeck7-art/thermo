@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermo - Settings</title>
+    <link rel="stylesheet" href="style.css"> <link rel="stylesheet" href="settings.css"> </head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h2 id="main-title">Settings <span style="color:#3b82f6">CH4</span></h2>
+            <button onclick="window.location.href='index.html'" class="action-link">← Back</button>
+        </div>
+
+        <div class="settings-card">
+            <h3 class="settings-title">DEVICE NAMES</h3>
+            <div id="settings-inputs">
+                <div class="setting-group">
+                    <label>Relay 1</label>
+                    <input type="text" id="name-input-1" class="myco-input" placeholder="Device Name">
+                </div>
+                <div class="setting-group">
+                    <label>Relay 2</label>
+                    <input type="text" id="name-input-2" class="myco-input" placeholder="Device Name">
+                </div>
+                <div class="setting-group">
+                    <label>Relay 3</label>
+                    <input type="text" id="name-input-3" class="myco-input" placeholder="Device Name">
+                </div>
+                <div class="setting-group">
+                    <label>Relay 4</label>
+                    <input type="text" id="name-input-4" class="myco-input" placeholder="Device Name">
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <h3 class="settings-title">SYSTEM DIAGNOSTICS</h3>
+            <div id="debug-log"></div> </div>
+
+        <button onclick="saveAndExit()" class="btn-save">SAVE & APPLY</button>
+    </div>
+
+    <script src="settings.js"></script>
+</body>
+</html>
