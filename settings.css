@@ -21,7 +21,7 @@ body {
 /* --- 2. CONTAINER & VIEW --- */
 .app-container {
     width: 100%;
-    max-width: 500px; /* Limits width on desktop, full width on mobile */
+    max-width: 400px; /* Limits width on desktop, full width on mobile */
     margin: 0 auto;
     padding: 10px 15px;
 }
