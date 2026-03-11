@@ -1,42 +1,47 @@
 /* =========================================
     THERMO BETA - SERVICE WORKER (sw.js)
-    =========================================
-    Purpose: Enables PWA Installation 
-    Function: Caches core files for offline use
-    =========================================
-*/
+   ========================================= */
 
-// The version name for your app's local storage
-const CACHE_NAME = 'THERMO-cache-v1';
+const CACHE_NAME = 'THERMO-cache-v2'; // Incremented version to force update
 
-/**
- * 1. INSTALL EVENT
- * Triggered when you first visit the site or click "+ Install App".
- * This saves your core files into the phone's memory.
- */
+// 1. INSTALL EVENT - Save all files for offline access
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // These are the 3 essential files needed to show the dashboard UI
       return cache.addAll([
         './', 
         'index.html', 
-        'manifest.json'
+        'style.css',
+        'settings.css',
+        'script.js',
+        'manifest.json',
+        'https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js'
       ]);
     })
   );
-  console.log("SYSTEM: THERMO Service Worker Installed");
+  console.log("SYSTEM: THERMO Service Worker Installed & Cached");
 });
 
-/**
- * 2. FETCH EVENT
- * Triggered every time the app asks for data.
- * If the internet fails, it "catches" the error and serves the saved files.
- */
+// 2. ACTIVATE EVENT - Clean up old caches if you update the version
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log("SYSTEM: Clearing old cache");
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+});
+
+// 3. FETCH EVENT - Serve from cache if network fails
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request).catch(() => {
-      // If offline, provide the cached version so the UI doesn't break
       return caches.match(event.request);
     })
   );
