@@ -246,11 +246,13 @@ body {
 /* Active buttons (the ones you can click) */
 .btn-on { 
     background: #10b981 !important; 
+    color: #ffffff !important;
     box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
 }
 
 .btn-off { 
-    background: #ef4444 !important; 
+    background: #ef4444 !important;
+    color: #ffffff !important; 
     box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
 }
 
