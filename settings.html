@@ -8,54 +8,56 @@
     <link rel="stylesheet" href="settings.css">
 </head>
 <body>
-    <div id="settings-view">
+    <div class="app-container">
         
-        <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 id="main-title" style="margin:0;">Thermo <span style="color:#3b82f6">Settings</span></h2>
-            <button onclick="window.location.href='index.html'" class="action-link">← BACK</button>
-        </div>
-
-        <div class="settings-card">
-            <h3>Device Names</h3>
+        <div id="settings-view">
             
-            <div class="setting-group">
-                <label>Relay 1</label>
-                <input type="text" id="name-input-1" class="myco-input" placeholder="e.g. Intake Fan">
+            <div class="header">
+                <h2 id="main-title">Thermo <span style="color:#3b82f6">Settings</span></h2>
+                <button onclick="window.location.href='index.html'" class="action-link">← BACK</button>
             </div>
 
-            <div class="setting-group">
-                <label>Relay 2</label>
-                <input type="text" id="name-input-2" class="myco-input" placeholder="e.g. Humidifier">
+            <div class="settings-card">
+                <h3>Device Names</h3>
+                
+                <div class="setting-group">
+                    <label>Relay 1</label>
+                    <input type="text" id="name-input-1" class="myco-input" placeholder="e.g. Intake Fan">
+                </div>
+
+                <div class="setting-group">
+                    <label>Relay 2</label>
+                    <input type="text" id="name-input-2" class="myco-input" placeholder="e.g. Humidifier">
+                </div>
+
+                <div class="setting-group">
+                    <label>Relay 3</label>
+                    <input type="text" id="name-input-3" class="myco-input" placeholder="e.g. Exhaust">
+                </div>
+
+                <div class="setting-group">
+                    <label>Relay 4</label>
+                    <input type="text" id="name-input-4" class="myco-input" placeholder="e.g. Lights">
+                </div>
             </div>
 
-            <div class="setting-group">
-                <label>Relay 3</label>
-                <input type="text" id="name-input-3" class="myco-input" placeholder="e.g. Exhaust">
+            <div class="settings-card">
+                <h3>System Diagnostics</h3>
+                <p style="color: #64748b; font-size: 0.7rem; margin-top: -10px; margin-bottom: 15px;">
+                    View recent MQTT activity and system status.
+                </p>
+                
+                <button id="toggle-log-btn">SHOW SYSTEM LOG</button>
+                <div id="debug-log"></div>
             </div>
 
-            <div class="setting-group">
-                <label>Relay 4</label>
-                <input type="text" id="name-input-4" class="myco-input" placeholder="e.g. Lights">
-            </div>
-        </div>
+            <button onclick="saveAndExit()" class="btn-save">SAVE & APPLY</button>
 
-        <div class="settings-card">
-            <h3>System Diagnostics</h3>
-            <p style="color: #64748b; font-size: 0.7rem; margin-top: -10px; margin-bottom: 15px;">
-                View recent MQTT activity and system status.
+            <p style="text-align: center; color: #475569; font-size: 0.65rem; margin-top: 20px;">
+                THERMO PROJECT © 2026
             </p>
-            
-            <button id="toggle-log-btn">SHOW SYSTEM LOG</button>
-            <div id="debug-log"></div>
         </div>
 
-        <button onclick="saveAndExit()" class="btn-save">SAVE & APPLY</button>
-
-        <p style="text-align: center; color: #475569; font-size: 0.65rem; margin-top: 20px;">
-            THERMO PROJECT © 2026
-        </p>
-    </div>
-
-    <script src="settings.js"></script>
+    </div> <script src="settings.js"></script>
 </body>
 </html>
