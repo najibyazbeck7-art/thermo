@@ -1,5 +1,5 @@
 /* =========================================
-    MYCOTECH BETA - MASTER JAVASCRIPT
+    THERMO BETA - MASTER JAVASCRIPT
     =========================================
     Project: Remote Mushroom Lab Dashboard
     Logic: MQTT Retained Names + Log Preservation
@@ -12,7 +12,7 @@ const HOST = "64b3984aead9464a9b1aa9c3f34080bb.s1.eu.hivemq.cloud";
 const PORT = 8884; 
 const USER = "najibyazbeck";
 const PASS = "Zaqwsx123*";
-const CLIENT_ID = "Mycotech_Beta_" + Math.random().toString(16).substr(2, 6);
+const CLIENT_ID = "THERMO_Beta_" + Math.random().toString(16).substr(2, 6);
 
 let deferredPrompt;
 let activeTimers = {}; 

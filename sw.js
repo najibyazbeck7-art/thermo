@@ -1,5 +1,5 @@
 /* =========================================
-    MYCOTECH BETA - SERVICE WORKER (sw.js)
+    THERMO BETA - SERVICE WORKER (sw.js)
     =========================================
     Purpose: Enables PWA Installation 
     Function: Caches core files for offline use
@@ -7,7 +7,7 @@
 */
 
 // The version name for your app's local storage
-const CACHE_NAME = 'mycotech-cache-v1';
+const CACHE_NAME = 'THERMO-cache-v1';
 
 /**
  * 1. INSTALL EVENT
@@ -25,7 +25,7 @@ self.addEventListener('install', (event) => {
       ]);
     })
   );
-  console.log("SYSTEM: Mycotech Service Worker Installed");
+  console.log("SYSTEM: THERMO Service Worker Installed");
 });
 
 /**

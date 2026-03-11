@@ -1,7 +1,7 @@
 {
   /* 1. APP NAMING */
-  "short_name": "Mycotech",        /* Name on the phone home screen */
-  "name": "Mycotech Hub",           /* Full name in app lists/installers */
+  "short_name": "THERMO",        /* Name on the phone home screen */
+  "name": "THERMO Hub",           /* Full name in app lists/installers */
 
   /* 2. STARTUP SETTINGS */
   "start_url": "./",                /* Opens your main dashboard folder */
