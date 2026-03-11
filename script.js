@@ -11,7 +11,7 @@ const CLIENT_ID = "THERMO_" + Math.random().toString(16).substr(2, 6);
 
 let deferredPrompt;
 let activeTimers = {}; 
-let heartbeatTimeout; // Safety timer to detect power loss
+let heartbeatTimeout; 
 const client = new Paho.MQTT.Client(HOST, PORT, CLIENT_ID);
 
 // --- 2. PWA INSTALLATION & SERVICE WORKER ---
@@ -38,20 +38,21 @@ function installApp() {
 
 // --- 3. MQTT CONNECTION ---
 function connectMQTT() {
-    saveLog("Connecting to THERMO Cloud...", "#3b82f6");
+    saveLog("Attempting to reach Cloud...", "#3b82f6");
     client.connect({
         userName: USER, password: PASS, useSSL: true,
         onSuccess: () => {
-            // Start in waiting mode until hardware checks in
-            updateStatus("WAITING FOR DEVICE...", "offline"); 
+            // App has internet/broker connection, but hardware status is unknown yet
+            updateStatus("CHECKING DEVICE...", "offline"); 
             client.subscribe("home/status/#"); 
             client.subscribe("home/relay/#");
             client.subscribe("home/availability");
-            saveLog("Cloud Link Established", "#10b981");
+            saveLog("Broker Linked. Waiting for Device...", "#10b981");
         },
         onFailure: (err) => {
-            updateStatus("FAILED", "offline");
-            saveLog("Connect Fail: " + err.errorMessage, "#ef4444");
+            // No internet or Broker is down
+            updateStatus("DISCONNECTED", "offline");
+            saveLog("Connection Failed: Check Internet", "#ef4444");
             setTimeout(connectMQTT, 5000);
         }
     });
@@ -62,44 +63,39 @@ client.onMessageArrived = (message) => {
     const payload = message.payloadString;
 
     // --- HEARTBEAT LOGIC ---
-    // If any message arrives, reset the "Dead Man's Switch"
+    // If any message arrives, we know the hardware is ALIVE and has INTERNET.
+    updateStatus("ONLINE", "online");
+    
     clearTimeout(heartbeatTimeout);
     heartbeatTimeout = setTimeout(() => {
-        updateStatus("OFFLINE (SIGNAL LOST)", "offline");
-    }, 65000); // 65 seconds timeout
+        // App is still connected to broker, but Hardware stopped talking
+        updateStatus("OFFLINE (NO POWER)", "offline");
+        saveLog("Hardware Signal Lost", "#ef4444");
+    }, 65000); 
 
-    // 1. Handle Relay Status Updates
     if (topic.includes("/status")) {
         const id = topic.split('/')[2];
         updateRelayUI(id, payload);
-        saveLog(`Relay ${id} is now ${payload}`, "#94a3b8");
-        updateStatus("ONLINE", "online"); // Any relay update proves device is ON
+        saveLog(`Relay ${id}: ${payload}`, "#94a3b8");
     }
     
-    // 2. Handle Custom Names via MQTT (if applicable)
-    if (topic.includes("/name")) {
-        const id = topic.split('/')[2];
-        localStorage.setItem(`relay-name-${id}`, payload);
-        applyCustomNames();
-    }
-
-    // 3. Handle Availability Topic
     if (topic.includes("/availability")) {
         updateStatus(payload, payload === "ONLINE" ? "online" : "offline");
-        saveLog(`System Status: ${payload}`, "#fbbf24");
+        saveLog(`Device Availability: ${payload}`, "#fbbf24");
     }
 };
 
 client.onConnectionLost = (resp) => {
-    updateStatus("OFFLINE (BROKER)", "offline");
-    saveLog("Signal Lost: " + resp.errorMessage, "#ef4444");
+    // This happens when the Phone/Browser loses internet or connection to HiveMQ
+    updateStatus("DISCONNECTED", "offline");
+    saveLog("Broker Connection Lost", "#ef4444");
     setTimeout(connectMQTT, 5000);
 };
 
 // --- 4. COMMANDS & TIMERS ---
 function publishCommand(num, val) {
     if (!client.isConnected()) {
-        saveLog("Error: Not Connected", "#ef4444");
+        saveLog("Error: No Connection", "#ef4444");
         return;
     }
     const message = new Paho.MQTT.Message(val);
@@ -165,7 +161,15 @@ function updateStatus(text, status) {
     const bar = document.getElementById('status-bar');
     if (bar) {
         bar.innerText = text;
+        // Logic: Only 'online' status gets the green color
         bar.className = (status === "online") ? 'status-pill is-online' : 'status-pill is-offline';
+        
+        // Custom color for DISCONNECTED state if you want it to look different than OFFLINE
+        if (text === "DISCONNECTED") {
+            bar.style.backgroundColor = "#475569"; // Slate gray for no internet
+        } else {
+            bar.style.backgroundColor = ""; // Use CSS classes
+        }
     }
 }
 
