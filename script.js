@@ -11,7 +11,7 @@ const CLIENT_ID = "THERMO_" + Math.random().toString(16).substr(2, 6);
 
 let deferredPrompt;
 let activeTimers = {}; 
-let heartbeatTimeout; // Timer to detect device power loss
+let heartbeatTimeout; // Safety timer to detect power loss
 const client = new Paho.MQTT.Client(HOST, PORT, CLIENT_ID);
 
 // --- 2. PWA INSTALLATION & SERVICE WORKER ---
@@ -42,12 +42,13 @@ function connectMQTT() {
     client.connect({
         userName: USER, password: PASS, useSSL: true,
         onSuccess: () => {
-    // We change this to "WAITING" so you know the hardware hasn't talked yet
-    updateStatus("WAITING FOR DEVICE...", "offline"); 
-    client.subscribe("home/status"); // Important: subscribe to the status topic
-    client.subscribe("home/relay/#");
-    saveLog("Cloud Link Established", "#10b981");
-},
+            // Start in waiting mode until hardware checks in
+            updateStatus("WAITING FOR DEVICE...", "offline"); 
+            client.subscribe("home/status/#"); 
+            client.subscribe("home/relay/#");
+            client.subscribe("home/availability");
+            saveLog("Cloud Link Established", "#10b981");
+        },
         onFailure: (err) => {
             updateStatus("FAILED", "offline");
             saveLog("Connect Fail: " + err.errorMessage, "#ef4444");
@@ -57,25 +58,35 @@ function connectMQTT() {
 }
 
 client.onMessageArrived = (message) => {
-    lastSignalTime = Date.now(); 
     const topic = message.destinationName;
     const payload = message.payloadString;
 
+    // --- HEARTBEAT LOGIC ---
+    // If any message arrives, reset the "Dead Man's Switch"
+    clearTimeout(heartbeatTimeout);
+    heartbeatTimeout = setTimeout(() => {
+        updateStatus("OFFLINE (SIGNAL LOST)", "offline");
+    }, 65000); // 65 seconds timeout
+
+    // 1. Handle Relay Status Updates
     if (topic.includes("/status")) {
         const id = topic.split('/')[2];
         updateRelayUI(id, payload);
-        writeLog(`Relay ${id} is now ${payload}`, "#94a3b8");
+        saveLog(`Relay ${id} is now ${payload}`, "#94a3b8");
+        updateStatus("ONLINE", "online"); // Any relay update proves device is ON
     }
     
+    // 2. Handle Custom Names via MQTT (if applicable)
     if (topic.includes("/name")) {
         const id = topic.split('/')[2];
         localStorage.setItem(`relay-name-${id}`, payload);
-        applyNamesToDashboard();
+        applyCustomNames();
     }
 
+    // 3. Handle Availability Topic
     if (topic.includes("/availability")) {
         updateStatus(payload, payload === "ONLINE" ? "online" : "offline");
-        writeLog(`System Status: ${payload}`, "#fbbf24");
+        saveLog(`System Status: ${payload}`, "#fbbf24");
     }
 };
 
