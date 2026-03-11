@@ -14,35 +14,17 @@ let activeTimers = {};
 let heartbeatTimeout; 
 const client = new Paho.MQTT.Client(HOST, PORT, CLIENT_ID);
 
-// --- 2. PWA INSTALLATION & SERVICE WORKER ---
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').then(() => console.log("THERMO: SW Registered"));
-}
+// --- 2. MQTT CORE CONNECTION & EVENT HANDLERS ---
 
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const installBtn = document.getElementById('install-pwa-btn');
-    if (installBtn) installBtn.style.display = 'block';
-});
-
-function installApp() {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choice) => {
-        if (choice.outcome === 'accepted') console.log('User installed Thermo');
-        deferredPrompt = null;
-        document.getElementById('install-pwa-btn').style.display = 'none';
-    });
-}
-
-// --- 3. MQTT CONNECTION ---
+/**
+ * Initiates connection to HiveMQ Cloud.
+ */
 function connectMQTT() {
     saveLog("Attempting to reach Cloud...", "#3b82f6");
     client.connect({
         userName: USER, password: PASS, useSSL: true,
         onSuccess: () => {
-            // App has internet/broker connection, but hardware status is unknown yet
+            // App has internet connection, hardware status unknown initially
             updateStatus("CHECKING DEVICE...", "offline"); 
             client.subscribe("home/status/#"); 
             client.subscribe("home/relay/#");
@@ -50,7 +32,7 @@ function connectMQTT() {
             saveLog("Broker Linked. Waiting for Device...", "#10b981");
         },
         onFailure: (err) => {
-            // No internet or Broker is down
+            // Mobile device has no internet or Broker is unreachable
             updateStatus("DISCONNECTED", "offline");
             saveLog("Connection Failed: Check Internet", "#ef4444");
             setTimeout(connectMQTT, 5000);
@@ -58,30 +40,31 @@ function connectMQTT() {
     });
 }
 
+/**
+ * Handles incoming messages from the MQTT Broker.
+ * Routes data to UI updates and handles system availability.
+ */
 client.onMessageArrived = (message) => {
     const topic = message.destinationName;
     const payload = message.payloadString;
 
-    // 1. HANDLE AVAILABILITY (The "Master" Status)
+    // A. HANDLE AVAILABILITY (The "Master" Status)
     if (topic.includes("/availability")) {
-        // This will set the bar to "OFFLINE" if the payload is OFFLINE
         updateStatus(payload, payload === "ONLINE" ? "online" : "offline");
         saveLog(`Device Availability: ${payload}`, "#fbbf24");
         
-        // If the device is explicitly OFFLINE, we stop the heartbeat timer
         if (payload === "OFFLINE") {
             clearTimeout(heartbeatTimeout);
-            return; // Don't process relay data if device is dead
+            return; 
         }
     }
 
-    // 2. HANDLE RELAY DATA
+    // B. HANDLE RELAY DATA
     if (topic.includes("/status")) {
         const id = topic.split('/')[2];
         updateRelayUI(id, payload);
         saveLog(`Relay ${id}: ${payload}`, "#94a3b8");
 
-        // HEARTBEAT SAFETY:
         // Only flip to ONLINE if the current bar doesn't already say OFFLINE
         const currentStatus = document.getElementById('status-bar').innerText;
         if (!currentStatus.includes("OFFLINE")) {
@@ -89,8 +72,7 @@ client.onMessageArrived = (message) => {
         }
     }
 
-    // 3. DEAD MAN'S SWITCH (Heartbeat)
-    // Only reset this if the message isn't an "OFFLINE" announcement
+    // C. DEAD MAN'S SWITCH (Heartbeat)
     if (payload !== "OFFLINE") {
         clearTimeout(heartbeatTimeout);
         heartbeatTimeout = setTimeout(() => {
@@ -100,14 +82,20 @@ client.onMessageArrived = (message) => {
     }
 };
 
+/**
+ * Handles unexpected disconnection from the MQTT Broker.
+ */
 client.onConnectionLost = (resp) => {
-    // This happens when the Phone/Browser loses internet or connection to HiveMQ
     updateStatus("DISCONNECTED", "offline");
     saveLog("Broker Connection Lost", "#ef4444");
     setTimeout(connectMQTT, 5000);
 };
 
-// --- 4. COMMANDS & TIMERS ---
+// --- 3. RELAY COMMANDS & COUNTDOWN TIMERS ---
+
+/**
+ * Publishes ON/OFF commands to specific relays.
+ */
 function publishCommand(num, val) {
     if (!client.isConnected()) {
         saveLog("Error: No Connection", "#ef4444");
@@ -127,6 +115,9 @@ function publishCommand(num, val) {
     }
 }
 
+/**
+ * Visual countdown logic for Auto-OFF functionality.
+ */
 function startTimer(num, seconds) {
     stopTimer(num);
     let timeLeft = seconds;
@@ -141,6 +132,9 @@ function startTimer(num, seconds) {
     }, 1000);
 }
 
+/**
+ * Clears active countdown and UI display.
+ */
 function stopTimer(num) {
     if (activeTimers[num]) {
         clearInterval(activeTimers[num]);
@@ -150,7 +144,11 @@ function stopTimer(num) {
     }
 }
 
-// --- 5. UI & LOGGING UTILITIES ---
+// --- 4. UI COMPONENTS & LOGGING ---
+
+/**
+ * Updates the Relay boxes and badges based on state.
+ */
 function updateRelayUI(id, state) {
     const badge = document.getElementById(`badge-${id}`);
     const btnOn = document.getElementById(`btn-on-${id}`);
@@ -172,22 +170,26 @@ function updateRelayUI(id, state) {
     }
 }
 
+/**
+ * Updates the Global Status Bar (Online/Offline/Disconnected).
+ */
 function updateStatus(text, status) {
     const bar = document.getElementById('status-bar');
     if (bar) {
         bar.innerText = text;
-        // Logic: Only 'online' status gets the green color
         bar.className = (status === "online") ? 'status-pill is-online' : 'status-pill is-offline';
         
-        // Custom color for DISCONNECTED state if you want it to look different than OFFLINE
         if (text === "DISCONNECTED") {
-            bar.style.backgroundColor = "#475569"; // Slate gray for no internet
+            bar.style.backgroundColor = "#475569"; 
         } else {
-            bar.style.backgroundColor = ""; // Use CSS classes
+            bar.style.backgroundColor = ""; 
         }
     }
 }
 
+/**
+ * Saves activity logs to LocalStorage for debugging on the Settings page.
+ */
 function saveLog(msg, color) {
     const time = new Date().toLocaleTimeString([], { hour12: false });
     const logEntry = { time, msg, color };
@@ -200,6 +202,9 @@ function saveLog(msg, color) {
     console.log(`[${time}] ${msg}`);
 }
 
+/**
+ * Loads custom device names from LocalStorage.
+ */
 function applyCustomNames() {
     for (let i = 1; i <= 4; i++) {
         const savedName = localStorage.getItem(`relay-name-${i}`);
@@ -210,7 +215,31 @@ function applyCustomNames() {
     }
 }
 
-// --- 6. INITIALIZATION ---
+// --- 5. PWA INSTALLATION LOGIC ---
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then(() => console.log("THERMO: SW Registered"));
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const installBtn = document.getElementById('install-pwa-btn');
+    if (installBtn) installBtn.style.display = 'block';
+});
+
+function installApp() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choice) => {
+        if (choice.outcome === 'accepted') console.log('User installed Thermo');
+        deferredPrompt = null;
+        document.getElementById('install-pwa-btn').style.display = 'none';
+    });
+}
+
+// --- 6. APP INITIALIZATION ---
+
 window.addEventListener('DOMContentLoaded', () => {
     applyCustomNames();
     connectMQTT();
