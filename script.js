@@ -80,6 +80,17 @@ client.onMessageArrived = (message) => {
             saveLog("Hardware Signal Lost", "#ef4444");
         }, 65000);
     }
+
+    // D. HANDLE NAME RESTORATION FROM CLOUD
+if (topic.includes("/name/")) {
+    const id = topic.split('/')[2];
+    // If the name in the cloud is different than local, update local
+    if (localStorage.getItem(`relay-name-${id}`) !== payload) {
+        localStorage.setItem(`relay-name-${id}`, payload);
+        applyCustomNames(); // Refresh the UI labels
+        saveLog(`Restored Name for Relay ${id} from Cloud`, "#3b82f6");
+    }
+}
 };
 
 /**
