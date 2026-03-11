@@ -11,6 +11,7 @@ const CLIENT_ID = "THERMO_" + Math.random().toString(16).substr(2, 6);
 
 let deferredPrompt;
 let activeTimers = {}; 
+let heartbeatTimeout; // Timer to detect device power loss
 const client = new Paho.MQTT.Client(HOST, PORT, CLIENT_ID);
 
 // --- 2. PWA INSTALLATION & SERVICE WORKER ---
@@ -41,7 +42,7 @@ function connectMQTT() {
     client.connect({
         userName: USER, password: PASS, useSSL: true,
         onSuccess: () => {
-            updateStatus("ONLINE", "online");
+            updateStatus("CONNECTED", "online");
             client.subscribe("home/relay/#");
             saveLog("Connected Successfully!", "#10b981");
         },
@@ -57,6 +58,16 @@ client.onMessageArrived = (message) => {
     const topic = message.destinationName;
     const payload = message.payloadString;
 
+    // --- HEARTBEAT LOGIC ---
+    // If we receive ANY message, the device is powered on.
+    // Reset the 65-second timeout timer.
+    updateStatus("ONLINE", "online");
+    clearTimeout(heartbeatTimeout);
+    heartbeatTimeout = setTimeout(() => {
+        updateStatus("OFFLINE (TIMEOUT)", "offline");
+        saveLog("System: No signal from device for 60s", "#ef4444");
+    }, 65000); 
+
     if (topic.includes("/status")) {
         const id = topic.split('/')[2];
         saveLog(`Relay ${id} reported: ${payload}`, "#94a3b8");
@@ -65,7 +76,7 @@ client.onMessageArrived = (message) => {
 };
 
 client.onConnectionLost = (resp) => {
-    updateStatus("OFFLINE", "offline");
+    updateStatus("OFFLINE (BROKER)", "offline");
     saveLog("Signal Lost: " + resp.errorMessage, "#ef4444");
     setTimeout(connectMQTT, 5000);
 };
@@ -143,18 +154,12 @@ function updateStatus(text, status) {
     }
 }
 
-/**
- * Saves logs to LocalStorage so they can be viewed on the separate Settings page.
- */
 function saveLog(msg, color) {
     const time = new Date().toLocaleTimeString([], { hour12: false });
     const logEntry = { time, msg, color };
     
-    // Get existing logs or create new array
     let logs = JSON.parse(localStorage.getItem('thermo_logs') || '[]');
     logs.push(logEntry);
-    
-    // Keep only last 20 entries to save space
     if (logs.length > 20) logs.shift();
     
     localStorage.setItem('thermo_logs', JSON.stringify(logs));
