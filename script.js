@@ -57,31 +57,25 @@ function connectMQTT() {
 }
 
 client.onMessageArrived = (message) => {
+    lastSignalTime = Date.now(); 
     const topic = message.destinationName;
     const payload = message.payloadString;
 
-    // 1. Check Global System Status
-    if (topic === "home/status") {
-        if (payload === "ONLINE") {
-            updateStatus("ONLINE", "online");
-            saveLog("Device is Powering ON", "#10b981");
-        } else {
-            updateStatus("OFFLINE", "offline");
-            saveLog("Device went OFFLINE", "#ef4444");
-        }
-    }
-
-    // 2. Heartbeat Timeout (Safety Net)
-    // Every time ANY message arrives, reset the 65s timer
-    clearTimeout(heartbeatTimeout);
-    heartbeatTimeout = setTimeout(() => {
-        updateStatus("LOST SIGNAL", "offline");
-    }, 65000); 
-
-    // 3. Update Relay Badges
     if (topic.includes("/status")) {
         const id = topic.split('/')[2];
         updateRelayUI(id, payload);
+        writeLog(`Relay ${id} is now ${payload}`, "#94a3b8");
+    }
+    
+    if (topic.includes("/name")) {
+        const id = topic.split('/')[2];
+        localStorage.setItem(`relay-name-${id}`, payload);
+        applyNamesToDashboard();
+    }
+
+    if (topic.includes("/availability")) {
+        updateStatus(payload, payload === "ONLINE" ? "online" : "offline");
+        writeLog(`System Status: ${payload}`, "#fbbf24");
     }
 };
 
