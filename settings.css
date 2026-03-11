@@ -4,13 +4,14 @@
     ROLE: Styles for the Independent Settings Page
    ========================================= */
 
-/* --- 1. LAYOUT & CONTAINER --- */
+/* --- 1. GLOBAL PAGE RESET --- */
 body {
-    background-color: #0f172a; /* Deep Slate Blue */
+    background-color: #0f172a;
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     color: #f1f5f9;
+    -webkit-tap-highlight-color: transparent;
 }
 
 #settings-view {
@@ -20,14 +21,29 @@ body {
     animation: fadeIn 0.3s ease;
 }
 
-/* --- 2. CARDS & SECTIONS --- */
+/* --- 2. HEADER SECTION --- */
+.header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 10px 0;
+    margin-bottom: 30px;
+}
+
+.header h2 {
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 900;
+}
+
+/* --- 3. CARDS --- */
 .settings-card {
-    background: rgba(30, 41, 59, 0.6);
+    background: rgba(30, 41, 59, 0.4);
     border-radius: 12px;
-    padding: 20px; 
+    padding: 24px 16px; 
     margin-bottom: 20px;
-    border: 1px solid rgba(148, 163, 184, 0.1);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .settings-card h3 {
@@ -40,13 +56,13 @@ body {
     font-weight: 700;
 }
 
-/* --- 3. INPUT GROUPS --- */
+/* --- 4. THE ROW LAYOUT (FIXED) --- */
 .setting-group {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 15px;
-    gap: 15px;
+    align-items: center; /* Vertically centers label and input */
+    justify-content: flex-start;
+    margin-bottom: 16px;
+    gap: 10px;
     width: 100%; 
 }
 
@@ -55,36 +71,35 @@ body {
     color: #64748b;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    min-width: 70px;
+    letter-spacing: 1px;
+    width: 80px; /* Ensures all inputs start at the same line */
+    flex-shrink: 0;
 }
 
-/* --- 4. DARK MODE INPUTS --- */
+/* --- 5. INPUTS --- */
 .myco-input {
-    flex: 1;
-    min-width: 0; 
+    flex: 1; /* Takes up remaining width */
     background: #020617;
-    border: 1px solid #334155;
+    border: 1px solid #1e293b;
     border-radius: 8px;
-    padding: 10px 14px;
+    padding: 12px;
     color: #f1f5f9;
-    font-size: 0.95rem;
+    font-size: 1rem;
     outline: none;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .myco-input:focus {
     border-color: #3b82f6;
-    background: #0f172a;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-/* --- 5. SYSTEM LOG STYLES --- */
+/* --- 6. LOG WINDOW --- */
 #debug-log {
-    display: none; /* Controlled by JS toggle */
+    display: none;
     background: #020617;
     color: #cbd5e1;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Courier New', monospace;
     font-size: 0.75rem;
     padding: 12px;
     margin-top: 15px;
@@ -93,94 +108,54 @@ body {
     overflow-y: auto;
     border: 1px solid #1e293b;
     line-height: 1.6;
-    text-align: left;
 }
 
-/* Individual Log Line Styling */
-#debug-log div {
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding: 3px 0;
-    word-break: break-all;
-}
-
-/* Log Toggle Button */
 #toggle-log-btn {
     width: 100%;
-    margin-top: 5px;
     background: rgba(148, 163, 184, 0.05);
     border: 1px solid rgba(148, 163, 184, 0.2);
     color: #94a3b8;
-    height: 40px;
+    height: 45px;
     border-radius: 8px;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 800;
-    letter-spacing: 1px;
     text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.2s ease;
 }
 
-#toggle-log-btn:hover {
-    background: rgba(148, 163, 184, 0.1);
-    color: #f1f5f9;
-}
-
-#toggle-log-btn:active {
-    transform: scale(0.98);
-}
-
-/* --- 6. SAVE & BACK BUTTONS --- */
+/* --- 7. BUTTONS --- */
 .btn-save {
     width: 100%;
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     color: #ffffff;
-    padding: 14px; 
-    border-radius: 10px;
+    padding: 16px; 
+    border-radius: 12px;
     border: none;
-    font-size: 0.9rem; 
+    font-size: 0.95rem; 
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     cursor: pointer;
-    margin-top: 10px; 
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    transition: all 0.2s ease;
-}
-
-.btn-save:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
 }
 
 .btn-save:active {
-    transform: translateY(1px);
-    filter: brightness(0.9);
+    transform: scale(0.98);
 }
 
-/* Navigation Link (Back Button) */
 .action-link {
-    background: transparent;
+    background: rgba(148, 163, 184, 0.1);
     border: 1px solid #334155;
-    color: #94a3b8;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    color: #f1f5f9;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
     cursor: pointer;
-    text-decoration: none;
 }
 
-/* --- 7. ANIMATIONS --- */
+/* --- 8. ANIMATION --- */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-/* Custom Scrollbar for the Log */
-#debug-log::-webkit-scrollbar {
-    width: 4px;
-}
-#debug-log::-webkit-scrollbar-thumb {
-    background: #334155;
-    border-radius: 10px;
 }
