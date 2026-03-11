@@ -42,10 +42,12 @@ function connectMQTT() {
     client.connect({
         userName: USER, password: PASS, useSSL: true,
         onSuccess: () => {
-            updateStatus("CONNECTED", "online");
-            client.subscribe("home/relay/#");
-            saveLog("Connected Successfully!", "#10b981");
-        },
+    // We change this to "WAITING" so you know the hardware hasn't talked yet
+    updateStatus("WAITING FOR DEVICE...", "offline"); 
+    client.subscribe("home/status"); // Important: subscribe to the status topic
+    client.subscribe("home/relay/#");
+    saveLog("Cloud Link Established", "#10b981");
+},
         onFailure: (err) => {
             updateStatus("FAILED", "offline");
             saveLog("Connect Fail: " + err.errorMessage, "#ef4444");
