@@ -1,8 +1,8 @@
 /* =========================================
-    THERMO BETA - MASTER JAVASCRIPT
+    MYCOTECH BETA - MASTER JAVASCRIPT
     =========================================
     Project: Remote Mushroom Lab Dashboard
-    Logic: MQTT Retained Names + Log Preservation
+    Logic: MQTT Retained Names + Log + PWA Install
     =========================================
 */
 
@@ -12,18 +12,45 @@ const HOST = "64b3984aead9464a9b1aa9c3f34080bb.s1.eu.hivemq.cloud";
 const PORT = 8884; 
 const USER = "najibyazbeck";
 const PASS = "Zaqwsx123*";
-const CLIENT_ID = "THERMO_Beta_" + Math.random().toString(16).substr(2, 6);
+const CLIENT_ID = "Mycotech_Beta_" + Math.random().toString(16).substr(2, 6);
 
-let deferredPrompt;
+let deferredPrompt; // For PWA Install
 let activeTimers = {}; 
 const client = new Paho.MQTT.Client(HOST, PORT, CLIENT_ID);
 
-const GEAR_SVG = `<svg class="gear-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>`;
+const GEAR_SVG = `<svg class="gear-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>`;
 const CLOSE_SVG = `<svg class="gear-svg" style="color:#ef4444" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
-// --- 2. PWA ---
+// --- 2. PWA & INSTALL LOGIC ---
+
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').then(() => console.log("SW Active"));
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const installBtn = document.getElementById('install-pwa-btn');
+    if (installBtn) installBtn.style.display = 'block'; // Show button when ready
+});
+
+async function installApp() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') writeLog("PWA: Installed successfully", "#10b981");
+        deferredPrompt = null;
+        document.getElementById('install-pwa-btn').style.display = 'none';
+    }
+}
+
+function shareApp() {
+    if (navigator.share) {
+        navigator.share({ title: 'Mycotech Beta', url: window.location.href });
+    } else {
+        navigator.clipboard.writeText(window.location.href);
+        writeLog("Link copied to clipboard", "#3b82f6");
+    }
 }
 
 // --- 3. MQTT CONNECTION ---
@@ -52,7 +79,6 @@ client.onMessageArrived = (message) => {
     if (topic.includes("/status")) {
         const id = topic.split('/')[2];
         updateRelayUI(id, payload);
-        writeLog(`Relay ${id} is now ${payload}`, "#94a3b8");
     }
     
     if (topic.includes("/name")) {
@@ -63,11 +89,10 @@ client.onMessageArrived = (message) => {
 
     if (topic.includes("/availability")) {
         updateStatus(payload, payload === "ONLINE" ? "online" : "offline");
-        writeLog(`System Status: ${payload}`, "#fbbf24");
     }
 };
 
-client.onConnectionLost = (err) => {
+client.onConnectionLost = () => {
     updateStatus("OFFLINE", "offline");
     writeLog("Connection Lost. Reconnecting...", "#ef4444");
     setTimeout(connectMQTT, 5000);
@@ -113,7 +138,7 @@ function stopTimer(num) {
     }
 }
 
-// --- 5. SETTINGS & MQTT PERSISTENCE ---
+// --- 5. SETTINGS & PERSISTENCE ---
 
 function toggleView() {
     const mainView = document.getElementById('main-view');
@@ -137,7 +162,7 @@ function loadSettingsInputs() {
         const saved = localStorage.getItem(`relay-name-${i}`);
         if (saved) document.getElementById(`name-input-${i}`).value = saved;
     }
-    const logVis = localStorage.getItem('show-log-button') !== 'false'; // Default to true
+    const logVis = localStorage.getItem('show-log-button') !== 'false';
     document.getElementById('log-vis-checkbox').checked = logVis;
 }
 
@@ -159,7 +184,7 @@ function saveAllSettings() {
     
     applyNamesToDashboard();
     toggleView();
-    writeLog("Configuration saved & synced", "#10b981");
+    writeLog("Cloud Sync Complete", "#10b981");
 }
 
 function applyNamesToDashboard() {
