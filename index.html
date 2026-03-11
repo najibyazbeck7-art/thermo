@@ -3,39 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THERMO Beta</title>
+    <title>MYCOTECH Beta</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="settings.css">
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
     <div class="app-container">
-    <div class="header">
-    <h2 id="main-title">THERMO <span style="color:#eb6f09">Thermo</span></h2>
-    <div class="header-controls">
-        <div id="status-bar" class="status-pill is-online">ONLINE</div>
-        <span id="heartbeat-timer">28S AGO</span>
-    </div>
-</div>
+        <div class="header">
+            <h2 id="main-title">MYCOTECH <span style="color:#3b82f6">Beta</span></h2>
+            <div class="header-controls">
+                <div id="status-bar" class="status-pill is-online">ONLINE</div>
+                <span id="heartbeat-timer">SIGNAL: -- AGO</span>
+            </div>
+        </div>
 
         <div class="action-row">
             <div class="action-group-left">
-                <button id="install-pwa-btn" class="action-link" style="display: none;" onclick="installApp()">+ Install</button>
-                <button id="share-btn" class="action-link" onclick="shareDashboard()">Share</button>
+                <button id="install-pwa-btn" class="action-link" style="display: none;" onclick="installApp()">+ INSTALL</button>
+                <button id="share-btn" class="action-link" onclick="shareApp()">SHARE</button>
             </div>
             
             <button class="settings-btn" onclick="toggleView()" id="nav-btn">
                 <svg class="gear-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path>
-                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path>
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path>
                 </svg>
             </button>
         </div>
-        
-        <div class="sub-header">
-            <span id="heartbeat-timer">Signal: -- ago</span>
-        </div>
+
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.05); margin: 10px 0;">
 
         <div id="main-view" class="view-active">
             <div id="relay-container">
@@ -49,8 +46,8 @@
                         <span id="countdown-1" class="countdown"></span>
                     </div>
                     <div class="btn-group">
-                        <button id="btn-on-1" class="btn btn-inactive" onclick="publishCommand(1, 'ON')">ON</button>
-                        <button id="btn-off-1" class="btn btn-off" onclick="publishCommand(1, 'OFF')">OFF</button>
+                        <button id="btn-on-1" class="btn btn-on" onclick="publishCommand(1, 'ON')">ON</button>
+                        <button id="btn-off-1" class="btn btn-inactive" onclick="publishCommand(1, 'OFF')">OFF</button>
                     </div>
                 </div>
 
@@ -64,8 +61,8 @@
                         <span id="countdown-2" class="countdown"></span>
                     </div>
                     <div class="btn-group">
-                        <button id="btn-on-2" class="btn btn-inactive" onclick="publishCommand(2, 'ON')">ON</button>
-                        <button id="btn-off-2" class="btn btn-off" onclick="publishCommand(2, 'OFF')">OFF</button>
+                        <button id="btn-on-2" class="btn btn-on" onclick="publishCommand(2, 'ON')">ON</button>
+                        <button id="btn-off-2" class="btn btn-inactive" onclick="publishCommand(2, 'OFF')">OFF</button>
                     </div>
                 </div>
 
@@ -79,8 +76,8 @@
                         <span id="countdown-3" class="countdown"></span>
                     </div>
                     <div class="btn-group">
-                        <button id="btn-on-3" class="btn btn-inactive" onclick="publishCommand(3, 'ON')">ON</button>
-                        <button id="btn-off-3" class="btn btn-off" onclick="publishCommand(3, 'OFF')">OFF</button>
+                        <button id="btn-on-3" class="btn btn-on" onclick="publishCommand(3, 'ON')">ON</button>
+                        <button id="btn-off-3" class="btn btn-inactive" onclick="publishCommand(3, 'OFF')">OFF</button>
                     </div>
                 </div>
 
@@ -94,19 +91,16 @@
                         <span id="countdown-4" class="countdown"></span>
                     </div>
                     <div class="btn-group">
-                        <button id="btn-on-4" class="btn btn-inactive" onclick="publishCommand(4, 'ON')">ON</button>
-                        <button id="btn-off-4" class="btn btn-off" onclick="publishCommand(4, 'OFF')">OFF</button>
+                        <button id="btn-on-4" class="btn btn-on" onclick="publishCommand(4, 'ON')">ON</button>
+                        <button id="btn-off-4" class="btn btn-inactive" onclick="publishCommand(4, 'OFF')">OFF</button>
                     </div>
                 </div>
             </div>
-            
-            <button class="log-btn" id="toggle-log-btn">SHOW SYSTEM LOG</button>
-            <div id="debug-log"></div>
         </div>
 
         <div id="settings-view" class="view-hidden">
             <div class="settings-card">
-                <h3 style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 15px; letter-spacing: 1px;">DEVICE NAMES</h3>
+                <h3 style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 15px; letter-spacing: 1px; text-transform: uppercase;">Device Names</h3>
                 <div class="setting-group">
                     <label>Relay 1</label>
                     <input type="text" id="name-input-1" class="myco-input" placeholder="e.g. Intake Fan">
@@ -123,11 +117,16 @@
                     <label>Relay 4</label>
                     <input type="text" id="name-input-4" class="myco-input" placeholder="e.g. Lights">
                 </div>
-                <div class="setting-toggle">
-                    <span>Show Log Button</span>
+                
+                <div class="setting-toggle" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <span style="font-size: 0.8rem; color: #94a3b8;">Show Log Button</span>
                     <input type="checkbox" id="log-vis-checkbox">
                 </div>
+
+                <button id="toggle-log-btn" class="action-link" style="width: 100%; margin-top: 20px; height: 32px; justify-content: center;">SHOW SYSTEM LOG</button>
+                <div id="debug-log"></div>
             </div>
+
             <button onclick="saveAllSettings()" class="btn-save">SAVE & APPLY</button>
         </div>
 
