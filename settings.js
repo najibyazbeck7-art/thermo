@@ -1,32 +1,90 @@
 /* =========================================
    PROJECT: THERMO
    FILE: settings.js
-   ROLE: Logic for the independent settings page
+   ROLE: Logic for settings with Cloud Sync
    ========================================= */
 
-// --- 1. INITIALIZATION ---
+// --- 1. CONFIGURATION (Same as Dashboard) ---
+const HOST = "64b3984aead9464a9b1aa9c3f34080bb.s1.eu.hivemq.cloud";
+const PORT = 8884; 
+const USER = "najibyazbeck";
+const PASS = "Zaqwsx123*";
+const CLIENT_ID = "THERMO_SETTINGS_" + Math.random().toString(16).substr(2, 6);
+
+const client = new Paho.MQTT.Client(HOST, PORT, CLIENT_ID);
+
+// --- 2. INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Load previously saved names from LocalStorage into the input fields
+    // Load local names immediately
     for (let i = 1; i <= 4; i++) {
         const savedName = localStorage.getItem(`relay-name-${i}`);
         const input = document.getElementById(`name-input-${i}`);
-        if (savedName && input) {
-            input.value = savedName;
-        }
+        if (savedName && input) input.value = savedName;
     }
 
-    // Initialize the Log Toggle behavior
     setupLogToggle();
-    
-    // Pre-render logs in case the user opens the log immediately
-    renderDashboardLogs();
+    connectSettingsMQTT();
 });
 
-// --- 2. LOG WINDOW LOGIC ---
+// --- 3. CLOUD SYNC LOGIC ---
+
+function connectSettingsMQTT() {
+    client.connect({
+        userName: USER, password: PASS, useSSL: true,
+        onSuccess: () => {
+            console.log("Settings synced with Cloud");
+            // Optional: subscribe to names to see what the cloud currently has
+            client.subscribe("home/name/#");
+        },
+        onFailure: (err) => console.log("Sync failed: " + err.errorMessage)
+    });
+}
+
 /**
- * Handles the showing/hiding of the debug log
- * Matches the #toggle-log-btn and #debug-log IDs in your CSS
+ * Pushes names to the Broker with RETAIN = TRUE
+ * This is what makes them survive a cache clear.
  */
+function publishNameBackup(id, name) {
+    if (client.isConnected()) {
+        const message = new Paho.MQTT.Message(name);
+        message.destinationName = `home/name/${id}`;
+        message.retained = true; // THE MAGIC SETTING
+        client.send(message);
+    }
+}
+
+// --- 4. SAVE & EXIT ---
+
+function saveAndExit() {
+    const saveBtn = document.querySelector('.btn-save');
+    
+    for (let i = 1; i <= 4; i++) {
+        const input = document.getElementById(`name-input-${i}`);
+        if (input) {
+            const newName = input.value.trim();
+            
+            // Save Locally
+            localStorage.setItem(`relay-name-${i}`, newName);
+            
+            // Save to Cloud Backup
+            publishNameBackup(i, newName);
+        }
+    }
+    
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    if (saveBtn) {
+        saveBtn.innerText = "✓ SYNCED TO CLOUD";
+        saveBtn.style.background = "linear-gradient(135deg, #10b981 0%, #059669 100%)";
+    }
+
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 800);
+}
+
+// --- 5. LOG & UI UTILITIES ---
+
 function setupLogToggle() {
     const logBtn = document.getElementById('toggle-log-btn');
     const logDiv = document.getElementById('debug-log');
@@ -34,11 +92,10 @@ function setupLogToggle() {
     if (logBtn && logDiv) {
         logBtn.onclick = () => {
             const isHidden = logDiv.style.display === 'none' || logDiv.style.display === '';
-            
             if (isHidden) {
                 logDiv.style.display = 'block';
                 logBtn.innerText = "HIDE SYSTEM LOG";
-                renderDashboardLogs(); // Refresh content from LocalStorage
+                renderDashboardLogs(); 
             } else {
                 logDiv.style.display = 'none';
                 logBtn.innerText = "SHOW SYSTEM LOG";
@@ -47,67 +104,19 @@ function setupLogToggle() {
     }
 }
 
-/**
- * Grabs the 'thermo_logs' array saved by script.js (on the dashboard)
- * and displays them formatted for the settings page.
- */
 function renderDashboardLogs() {
     const logDiv = document.getElementById('debug-log');
     if (!logDiv) return;
-
-    const rawLogs = localStorage.getItem('thermo_logs');
-    const logs = JSON.parse(rawLogs || '[]');
+    const logs = JSON.parse(localStorage.getItem('thermo_logs') || '[]');
     
-    if (logs.length === 0) {
-        logDiv.innerHTML = '<div style="color:#64748b; padding: 5px;">> No system logs found.</div>';
-        return;
-    }
-
-    // Map the log objects to HTML strings
-    logDiv.innerHTML = logs.map(log => `
-        <div style="margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-            <span style="color:#64748b">[${log.time}]</span> 
-            <span style="color:${log.color}">${log.msg}</span>
-        </div>
-    `).join('');
+    logDiv.innerHTML = logs.length === 0 ? 
+        '<div style="color:#64748b; padding:10px;">> No logs...</div>' :
+        logs.map(log => `
+            <div style="margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,0.03);">
+                <span style="color:#64748b; font-size: 0.65rem;">[${log.time}]</span> 
+                <span style="color:${log.color || '#f1f5f9'}; font-size: 0.75rem;"> ${log.msg}</span>
+            </div>
+        `).join('');
     
-    // Auto-scroll to the bottom of the logs
     logDiv.scrollTop = logDiv.scrollHeight;
-}
-
-// --- 3. SAVE LOGIC ---
-/**
- * Captures all input values, saves them to LocalStorage, 
- * and redirects the user back to the main dashboard.
- */
-function saveAndExit() {
-    // 1. Save to LocalStorage (for immediate use)
-    for (let i = 1; i <= 4; i++) {
-        const input = document.getElementById(`name-input-${i}`);
-        if (input) {
-            const newName = input.value.trim();
-            localStorage.setItem(`relay-name-${i}`, newName);
-            
-            // 2. BACKUP TO MQTT: Send to 'home/name/1', 'home/name/2', etc.
-            // Note: This requires a temporary MQTT connection in settings.js 
-            // or a shared client. For now, let's focus on the Logic:
-            publishNameBackup(i, newName); 
-        }
-    }
-    
-    // Visual Feedback
-    const saveBtn = document.querySelector('.btn-save');
-    if (saveBtn) saveBtn.innerText = "✓ SYNCED TO CLOUD";
-
-    setTimeout(() => { window.location.href = 'index.html'; }, 800);
-}
-
-// Helper to push names to broker so they survive cache clears
-function publishNameBackup(id, name) {
-    if (typeof client !== 'undefined' && client.isConnected()) {
-        const msg = new Paho.MQTT.Message(name);
-        msg.destinationName = `home/name/${id}`;
-        msg.retained = true; // THIS IS THE KEY: The broker remembers this forever
-        client.send(msg);
-    }
 }
