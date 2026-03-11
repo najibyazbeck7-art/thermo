@@ -58,19 +58,27 @@ client.onMessageArrived = (message) => {
     const topic = message.destinationName;
     const payload = message.payloadString;
 
-    // --- HEARTBEAT LOGIC ---
-    // If we receive ANY message, the device is powered on.
-    // Reset the 65-second timeout timer.
-    updateStatus("ONLINE", "online");
+    // 1. Check Global System Status
+    if (topic === "home/status") {
+        if (payload === "ONLINE") {
+            updateStatus("ONLINE", "online");
+            saveLog("Device is Powering ON", "#10b981");
+        } else {
+            updateStatus("OFFLINE", "offline");
+            saveLog("Device went OFFLINE", "#ef4444");
+        }
+    }
+
+    // 2. Heartbeat Timeout (Safety Net)
+    // Every time ANY message arrives, reset the 65s timer
     clearTimeout(heartbeatTimeout);
     heartbeatTimeout = setTimeout(() => {
-        updateStatus("OFFLINE (TIMEOUT)", "offline");
-        saveLog("System: No signal from device for 60s", "#ef4444");
+        updateStatus("LOST SIGNAL", "offline");
     }, 65000); 
 
+    // 3. Update Relay Badges
     if (topic.includes("/status")) {
         const id = topic.split('/')[2];
-        saveLog(`Relay ${id} reported: ${payload}`, "#94a3b8");
         updateRelayUI(id, payload);
     }
 };
