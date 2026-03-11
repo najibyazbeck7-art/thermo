@@ -1,0 +1,346 @@
+/* =========================================
+    MYCOTECH BETA - MASTER STYLESHEET
+    =========================================
+    Project: Remote Mushroom Lab Dashboard
+    Owner: Antonio
+    Layout: Mobile-First, Compact
+    =========================================
+*/
+
+/* --- 1. GLOBAL THEME & RESET --- */
+body { 
+    font-family: 'Segoe UI', system-ui, sans-serif; 
+    background: #0f172a; 
+    color: white; 
+    margin: 0; 
+    padding: 10px; 
+    display: flex;
+    justify-content: center;
+}
+
+/* Main dark card wrapper */
+.app-container { 
+    display: flex;
+    flex-direction: column; 
+    width: 95%;
+    max-width: 400px; 
+    background: #1e293b; 
+    padding: 20px; 
+    border-radius: 24px; 
+    margin: auto;
+    box-sizing: border-box;
+}
+
+/* --- 2. HEADER SECTION --- */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px; /* Reduced from 20px */
+    margin-bottom: 10px; /* Reduced space before actions */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#main-title {
+    font-size: 1.1rem; /* Smaller title */
+    margin: 0;
+}
+
+.header h2 {
+    margin: 0;
+    font-size: 1.2em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Online/Offline pill */
+.status-pill { 
+    padding: 4px 10px; 
+    border-radius: 12px; 
+    font-size: 0.7em; 
+    font-weight: 800; 
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.is-online { background: #065f46; color: #34d399; }
+.is-offline { background: #450a0a; color: #f87171; }
+
+
+/* --- HEADER CONTROLS --- */
+.header-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Aligns pill and signal to the right */
+    justify-content: center;
+}
+
+/* --- Settings Gear --- */
+.settings-link {
+    text-decoration: none;
+    transition: transform 0.2s, color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-link:active {
+    transform: scale(0.9); /* Visual feedback when tapped */
+}
+
+.gear-icon {
+    font-size: 1.2rem; /* Increased size for tap-friendliness */
+    color: #94a3b8; /* Muted slate color */
+}
+
+.settings-link:hover .gear-icon {
+    color: #34d399; /* Neon green glow on hover/active */
+    text-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+}
+
+/* --- VIEW TOGGLING --- */
+.view-hidden {
+    display: none !important;}
+
+.view-active {
+    display: block !important;}
+
+/* Remove the old sub-header spacing */
+.sub-header {
+    display: none; /* We are moving the timer, so we hide the old container */
+}
+
+.status-pill {
+    padding: 3px 8px; /* Thinner pill */
+    font-size: 0.65rem;
+    height: fit-content;
+}
+
+#heartbeat-timer {
+    font-size: 0.3rem;
+    font-family: monospace;
+    color: var(--text-muted);
+    margin-top: 8px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+/* --- 3. PWA ACTION BUTTONS (INSTALL/SHARE) --- */
+.action-row {
+    margin-bottom: 8px; /* Reduce gap after Share/Install buttons */
+}
+
+.action-link {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    color: #60a5fa; 
+    font-size: 0.7rem;
+    height: 28px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    padding: 5px 12px;
+    border-radius: 20px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+#install-pwa-btn {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+/* --- 4. RELAY CONTROL CARDS --- */
+#relay-container { width: 100%; }
+
+.relay-box { 
+    background: #334155; 
+    padding: 12px; 
+    border-radius: 12px; 
+    margin-bottom: 10px; 
+    border-left: 4px solid #475569; /* Default gray border */
+    transition: 0.3s; 
+}
+
+/* Green glow border when relay is active */
+.relay-box.active { border-left-color: #10b981; }
+
+.relay-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1); /* Very thin slate line */
+}
+
+/* The small "OFF/ON" text in the corner */
+.state-indicator { 
+    padding: 2px 8px; 
+    border-radius: 6px; 
+    font-size: 0.7em; 
+    font-weight: bold; 
+    background: #1e293b; 
+    color: #cbd5e1; /* UPDATED: Light Gray for OFF state */
+    text-transform: uppercase;
+}
+
+/* Changes text to green when active */
+.relay-box.active .state-indicator {
+    color: #34d399; 
+}
+
+/* --- 5. TIMER & INPUT CONTROLS --- */
+.timer-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.timer-row label {
+    font-size: 0.65em; 
+    color: #64748b; 
+    text-transform: uppercase;
+}
+
+.timer-row input {
+    width: 45px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    color: white;
+    font-size: 0.8em;
+    border-radius: 4px;
+    padding: 2px;
+    text-align: center;
+}
+
+.countdown { 
+    font-size: 0.75em; 
+    color: #fbbf24; 
+    font-family: monospace;
+    font-weight: bold;
+}
+
+/* --- 6. ACTION-READY BUTTONS (REVERSED LOGIC) --- */
+.btn-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;                 /* Thinner gap between ON and OFF */
+}
+
+.btn {
+    padding: 8px 12px;        /* Reduced vertical padding from 12px to 8px */
+    border-radius: 6px;       /* Slightly tighter corners for a modern look */
+    border: none;
+    font-weight: 800;
+    font-size: 0.75rem;       /* Slightly smaller text to match the new relay names */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 30px;             /* Fixed height ensures all buttons are perfectly uniform 36 */
+}
+
+/* Active buttons (the ones you can click) */
+.btn-on { 
+    background: #10b981 !important; 
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+}
+
+.btn-off { 
+    background: #ef4444 !important; 
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+}
+
+/* Dark Inactive buttons (the state that is currently running) */
+.btn-inactive { 
+    background: #1e293b !important; 
+    color: #475569 !important; 
+    opacity: 0.6; 
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    cursor: default;
+}
+
+/* --- 7. LOGGING & DEBUG SECTION --- */
+.log-btn {
+    background: rgba(255,255,255,0.05);
+    color: #64748b;
+    border: 1px solid #334155;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.7em;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+}
+
+#debug-log { 
+    display: none;
+    margin-top: 10px; 
+    background: #000; 
+    color: #10b981; 
+    font-family: monospace; 
+    font-size: 10px; 
+    padding: 8px; 
+    border-radius: 8px; 
+    height: 100px; 
+    overflow-y: auto; 
+    border: 1px solid #333; 
+}
+
+/* --- ACTION ROW ALIGNMENT --- */
+.action-row {
+    display: flex;
+    justify-content: space-between; /* Puts Share on left, Gear on right */
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.action-group-left {
+    display: flex;
+    gap: 10px;
+}
+
+/* --- 2D GEAR BUTTON --- */
+.settings-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease;
+}
+
+.gear-svg {
+    width: 22px;
+    height: 22px;
+    color: #3b82f6; /* Matches your "Beta" text color */
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.settings-btn:hover {
+    transform: rotate(45deg); /* Subtle interaction */
+}
+
+/* Cleanup Header */
+.header-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+
+.device-name {
+    color: #94a3b8;           /* Muted slate color */
+    font-size: 0.8rem;        /* Smaller, precise size */
+    font-weight: 700;         /* Bold enough to read */
+    text-transform: uppercase;/* All caps for the "label" look */
+    letter-spacing: 1px;      /* Spaced out professional feel */
+}
+
+/* Utility class to show log when button is clicked */
+#debug-log.visible { display: block !important; }
