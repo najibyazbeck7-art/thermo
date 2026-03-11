@@ -62,26 +62,41 @@ client.onMessageArrived = (message) => {
     const topic = message.destinationName;
     const payload = message.payloadString;
 
-    // --- HEARTBEAT LOGIC ---
-    // If any message arrives, we know the hardware is ALIVE and has INTERNET.
-    updateStatus("ONLINE", "online");
-    
-    clearTimeout(heartbeatTimeout);
-    heartbeatTimeout = setTimeout(() => {
-        // App is still connected to broker, but Hardware stopped talking
-        updateStatus("OFFLINE (NO POWER)", "offline");
-        saveLog("Hardware Signal Lost", "#ef4444");
-    }, 65000); 
+    // 1. HANDLE AVAILABILITY (The "Master" Status)
+    if (topic.includes("/availability")) {
+        // This will set the bar to "OFFLINE" if the payload is OFFLINE
+        updateStatus(payload, payload === "ONLINE" ? "online" : "offline");
+        saveLog(`Device Availability: ${payload}`, "#fbbf24");
+        
+        // If the device is explicitly OFFLINE, we stop the heartbeat timer
+        if (payload === "OFFLINE") {
+            clearTimeout(heartbeatTimeout);
+            return; // Don't process relay data if device is dead
+        }
+    }
 
+    // 2. HANDLE RELAY DATA
     if (topic.includes("/status")) {
         const id = topic.split('/')[2];
         updateRelayUI(id, payload);
         saveLog(`Relay ${id}: ${payload}`, "#94a3b8");
+
+        // HEARTBEAT SAFETY:
+        // Only flip to ONLINE if the current bar doesn't already say OFFLINE
+        const currentStatus = document.getElementById('status-bar').innerText;
+        if (!currentStatus.includes("OFFLINE")) {
+            updateStatus("ONLINE", "online");
+        }
     }
-    
-    if (topic.includes("/availability")) {
-        updateStatus(payload, payload === "ONLINE" ? "online" : "offline");
-        saveLog(`Device Availability: ${payload}`, "#fbbf24");
+
+    // 3. DEAD MAN'S SWITCH (Heartbeat)
+    // Only reset this if the message isn't an "OFFLINE" announcement
+    if (payload !== "OFFLINE") {
+        clearTimeout(heartbeatTimeout);
+        heartbeatTimeout = setTimeout(() => {
+            updateStatus("OFFLINE (TIMEOUT)", "offline");
+            saveLog("Hardware Signal Lost", "#ef4444");
+        }, 65000);
     }
 };
 
