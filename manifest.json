@@ -1,6 +1,6 @@
 {
-  "short_name": "Mycotech",
-  "name": "Mycotech Hub",
+  "short_name": "THERMO",
+  "name": "THERMO Hub",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -15,22 +15,10 @@
       "purpose": "any"
     },
     {
-      "src": "icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "maskable"
-    },
-    {
       "src": "icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
-    },
-    {
-      "src": "icon-512.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "maskable"
     }
   ]
 }
