@@ -313,19 +313,28 @@ body {
     padding: 5px;
     display: flex;
     align-items: center;
-    transition: transform 0.3s ease;
+    /* transition: transform 0.1s ease;  Optional: smooths the click/tap scale */
 }
 
 .gear-svg {
     width: 22px;
     height: 22px;
-    color: #3b82f6; /* Matches your "Beta" text color */
+    color: #3b82f6; 
     stroke-linecap: round;
     stroke-linejoin: round;
+    transition: transform 0.3s ease;
 }
 
-.settings-btn:hover {
-    transform: rotate(45deg); /* Subtle interaction */
+/* DESKTOP ONLY: Smooth rotation when the mouse hovers */
+@media (hover: hover) {
+    .settings-btn:hover .gear-svg {
+        transform: rotate(45deg);
+    }
+}
+
+/* MOBILE & DESKTOP: Feedback when the button is actually pressed/tapped */
+.settings-btn:active {
+    transform: scale(0.9);
 }
 
 /* Cleanup Header */
