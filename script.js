@@ -1,8 +1,7 @@
 /* =========================================
-    THERMO BETA - MASTER DASHBOARD LOGIC
+    THERMO BETA - DASHBOARD LOGIC
    ========================================= */
 
-// --- 1. CONFIGURATION & GLOBALS ---
 const HOST = "64b3984aead9464a9b1aa9c3f34080bb.s1.eu.hivemq.cloud";
 const PORT = 8884; 
 const USER = "najibyazbeck";
@@ -14,104 +13,79 @@ let activeTimers = {};
 let heartbeatTimeout; 
 const client = new Paho.MQTT.Client(HOST, PORT, CLIENT_ID);
 
-// --- 2. MQTT CORE CONNECTION & EVENT HANDLERS ---
+// --- 1. MQTT CONNECTION & HEARTBEAT ---
 
-/**
- * Initiates connection to HiveMQ Cloud.
- */
 function connectMQTT() {
-    saveLog("Attempting to reach Cloud...", "#3b82f6");
+    saveLog("Linking to Cloud...", "#3b82f6");
     client.connect({
         userName: USER, password: PASS, useSSL: true,
         onSuccess: () => {
-            // App has internet connection, hardware status unknown initially
-            updateStatus("CHECKING DEVICE...", "offline"); 
+            updateStatus("CHECKING...", "offline"); 
             client.subscribe("home/status/#"); 
             client.subscribe("home/relay/#");
             client.subscribe("home/availability");
-            saveLog("Broker Linked. Waiting for Device...", "#10b981");
+            client.subscribe("home/name/#"); // Listen for cloud backup names
+            saveLog("Broker Connected.", "#10b981");
         },
         onFailure: (err) => {
-            // Mobile device has no internet or Broker is unreachable
             updateStatus("DISCONNECTED", "offline");
-            saveLog("Connection Failed: Check Internet", "#ef4444");
+            saveLog("Offline: Check Internet", "#ef4444");
             setTimeout(connectMQTT, 5000);
         }
     });
 }
 
-/**
- * Handles incoming messages from the MQTT Broker.
- * Routes data to UI updates and handles system availability.
- */
 client.onMessageArrived = (message) => {
     const topic = message.destinationName;
     const payload = message.payloadString;
 
-    // A. HANDLE AVAILABILITY (The "Master" Status)
+    // A. Handle Hardware Availability
     if (topic.includes("/availability")) {
         updateStatus(payload, payload === "ONLINE" ? "online" : "offline");
-        saveLog(`Device Availability: ${payload}`, "#fbbf24");
-        
         if (payload === "OFFLINE") {
             clearTimeout(heartbeatTimeout);
             return; 
         }
     }
 
-    // B. HANDLE RELAY DATA
+    // B. Handle Relay State
     if (topic.includes("/status")) {
         const id = topic.split('/')[2];
         updateRelayUI(id, payload);
-        saveLog(`Relay ${id}: ${payload}`, "#94a3b8");
+        
+        // Safety: If we get a status, hardware is alive
+        const currentBar = document.getElementById('status-bar').innerText;
+        if (!currentBar.includes("OFFLINE")) updateStatus("ONLINE", "online");
+    }
 
-        // Only flip to ONLINE if the current bar doesn't already say OFFLINE
-        const currentStatus = document.getElementById('status-bar').innerText;
-        if (!currentStatus.includes("OFFLINE")) {
-            updateStatus("ONLINE", "online");
+    // C. Handle Name Sync from Cloud
+    if (topic.includes("/name/")) {
+        const id = topic.split('/')[2];
+        if (localStorage.getItem(`relay-name-${id}`) !== payload) {
+            localStorage.setItem(`relay-name-${id}`, payload);
+            applyCustomNames();
         }
     }
 
-    // C. DEAD MAN'S SWITCH (Heartbeat)
+    // D. Heartbeat Timer (65s)
     if (payload !== "OFFLINE") {
         clearTimeout(heartbeatTimeout);
         heartbeatTimeout = setTimeout(() => {
             updateStatus("OFFLINE (TIMEOUT)", "offline");
-            saveLog("Hardware Signal Lost", "#ef4444");
+            saveLog("Signal Lost", "#ef4444");
         }, 65000);
     }
-
-    // D. HANDLE NAME RESTORATION FROM CLOUD
-if (topic.includes("/name/")) {
-    const id = topic.split('/')[2];
-    // If the name in the cloud is different than local, update local
-    if (localStorage.getItem(`relay-name-${id}`) !== payload) {
-        localStorage.setItem(`relay-name-${id}`, payload);
-        applyCustomNames(); // Refresh the UI labels
-        saveLog(`Restored Name for Relay ${id} from Cloud`, "#3b82f6");
-    }
-}
 };
 
-/**
- * Handles unexpected disconnection from the MQTT Broker.
- */
-client.onConnectionLost = (resp) => {
+client.onConnectionLost = () => {
     updateStatus("DISCONNECTED", "offline");
-    saveLog("Broker Connection Lost", "#ef4444");
     setTimeout(connectMQTT, 5000);
 };
 
-// --- 3. RELAY COMMANDS & COUNTDOWN TIMERS ---
+// --- 2. COMMANDS & UI ---
 
-/**
- * Publishes ON/OFF commands to specific relays.
- */
 function publishCommand(num, val) {
-    if (!client.isConnected()) {
-        saveLog("Error: No Connection", "#ef4444");
-        return;
-    }
+    if (!client.isConnected()) return;
     const message = new Paho.MQTT.Message(val);
     message.destinationName = `home/relay/${num}`;
     message.retained = true; 
@@ -119,16 +93,44 @@ function publishCommand(num, val) {
 
     if (val === "ON") {
         const input = document.getElementById(`timer-input-${num}`);
-        const seconds = input ? parseInt(input.value) : 0;
-        if (seconds > 0) startTimer(num, seconds);
+        const secs = input ? parseInt(input.value) : 0;
+        if (secs > 0) startTimer(num, secs);
     } else {
         stopTimer(num);
     }
 }
 
-/**
- * Visual countdown logic for Auto-OFF functionality.
- */
+function updateRelayUI(id, state) {
+    const badge = document.getElementById(`badge-${id}`);
+    const btnOn = document.getElementById(`btn-on-${id}`);
+    const btnOff = document.getElementById(`btn-off-${id}`);
+    const box = document.querySelector(`.relay-box[data-relay="${id}"]`);
+    
+    if (!badge) return;
+    badge.innerText = state;
+
+    if (state === "ON") {
+        box.classList.add('active');
+        btnOn.className = "btn btn-inactive";
+        btnOff.className = "btn btn-off";
+    } else {
+        box.classList.remove('active');
+        btnOn.className = "btn btn-on";
+        btnOff.className = "btn btn-inactive";
+        stopTimer(id);
+    }
+}
+
+function updateStatus(text, status) {
+    const bar = document.getElementById('status-bar');
+    if (!bar) return;
+    bar.innerText = text;
+    bar.className = (status === "online") ? 'status-pill is-online' : 'status-pill is-offline';
+    bar.style.backgroundColor = (text === "DISCONNECTED") ? "#475569" : "";
+}
+
+// --- 3. UTILITIES ---
+
 function startTimer(num, seconds) {
     stopTimer(num);
     let timeLeft = seconds;
@@ -143,114 +145,38 @@ function startTimer(num, seconds) {
     }, 1000);
 }
 
-/**
- * Clears active countdown and UI display.
- */
 function stopTimer(num) {
     if (activeTimers[num]) {
         clearInterval(activeTimers[num]);
         delete activeTimers[num];
-        const display = document.getElementById(`countdown-${num}`);
-        if(display) display.innerText = "";
+        const disp = document.getElementById(`countdown-${num}`);
+        if(disp) disp.innerText = "";
     }
 }
 
-// --- 4. UI COMPONENTS & LOGGING ---
-
-/**
- * Updates the Relay boxes and badges based on state.
- */
-function updateRelayUI(id, state) {
-    const badge = document.getElementById(`badge-${id}`);
-    const btnOn = document.getElementById(`btn-on-${id}`);
-    const btnOff = document.getElementById(`btn-off-${id}`);
-    if (!badge) return;
-
-    const box = badge.closest('.relay-box');
-    badge.innerText = state;
-
-    if (state === "ON") {
-        box.classList.add('active');
-        if (btnOn) btnOn.className = "btn btn-inactive";
-        if (btnOff) btnOff.className = "btn btn-off";
-    } else {
-        box.classList.remove('active');
-        if (btnOn) btnOn.className = "btn btn-on";
-        if (btnOff) btnOff.className = "btn btn-inactive";
-        stopTimer(id);
-    }
-}
-
-/**
- * Updates the Global Status Bar (Online/Offline/Disconnected).
- */
-function updateStatus(text, status) {
-    const bar = document.getElementById('status-bar');
-    if (bar) {
-        bar.innerText = text;
-        bar.className = (status === "online") ? 'status-pill is-online' : 'status-pill is-offline';
-        
-        if (text === "DISCONNECTED") {
-            bar.style.backgroundColor = "#475569"; 
-        } else {
-            bar.style.backgroundColor = ""; 
-        }
-    }
-}
-
-/**
- * Saves activity logs to LocalStorage for debugging on the Settings page.
- */
 function saveLog(msg, color) {
     const time = new Date().toLocaleTimeString([], { hour12: false });
-    const logEntry = { time, msg, color };
-    
     let logs = JSON.parse(localStorage.getItem('thermo_logs') || '[]');
-    logs.push(logEntry);
+    logs.push({ time, msg, color });
     if (logs.length > 20) logs.shift();
-    
     localStorage.setItem('thermo_logs', JSON.stringify(logs));
-    console.log(`[${time}] ${msg}`);
 }
 
-/**
- * Loads custom device names from LocalStorage.
- */
 function applyCustomNames() {
     for (let i = 1; i <= 4; i++) {
-        const savedName = localStorage.getItem(`relay-name-${i}`);
+        const name = localStorage.getItem(`relay-name-${i}`);
         const label = document.querySelector(`.relay-box[data-relay="${i}"] .device-name`);
-        if (savedName && label && savedName.trim() !== "") {
-            label.innerText = savedName;
-        }
+        if (name && label) label.innerText = name;
     }
 }
 
-// --- 5. PWA INSTALLATION LOGIC ---
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').then(() => console.log("THERMO: SW Registered"));
+function shareDashboard() {
+    if (navigator.share) {
+        navigator.share({ title: 'Thermo Hub', url: window.location.href });
+    }
 }
 
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const installBtn = document.getElementById('install-pwa-btn');
-    if (installBtn) installBtn.style.display = 'block';
-});
-
-function installApp() {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((choice) => {
-        if (choice.outcome === 'accepted') console.log('User installed Thermo');
-        deferredPrompt = null;
-        document.getElementById('install-pwa-btn').style.display = 'none';
-    });
-}
-
-// --- 6. APP INITIALIZATION ---
-
+// Init
 window.addEventListener('DOMContentLoaded', () => {
     applyCustomNames();
     connectMQTT();
