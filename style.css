@@ -353,6 +353,7 @@ body {
     letter-spacing: 1px;      /* Spaced out professional feel */
 }
 
+/* Temperature Display */
 .temp-display {
     background: rgba(59, 130, 246, 0.1); /* Subtle blue glow */
     border: 1px solid rgba(59, 130, 246, 0.2);
@@ -366,7 +367,7 @@ body {
 
 #temp-value {
     color: #3b82f6;
-    font-size: 1.2rem;
+    font-size: 0.9rem;
 }
 
 .temp-unit {
