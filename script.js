@@ -42,6 +42,10 @@ client.onMessageArrived = (message) => {
     // A. Handle Hardware Availability
     if (topic.includes("/availability")) {
         updateStatus(payload, payload === "ONLINE" ? "online" : "offline");
+        
+        // ADDED TO LOG:
+        saveLog(`Device status: ${payload}`, payload === "ONLINE" ? "#10b981" : "#fbbf24");
+
         if (payload === "OFFLINE") {
             clearTimeout(heartbeatTimeout);
             return; 
@@ -53,7 +57,9 @@ client.onMessageArrived = (message) => {
         const id = topic.split('/')[2];
         updateRelayUI(id, payload);
         
-        // Safety: If we get a status, hardware is alive
+        // ADDED TO LOG:
+        saveLog(`Relay ${id} turned ${payload}`, "#94a3b8");
+        
         const currentBar = document.getElementById('status-bar').innerText;
         if (!currentBar.includes("OFFLINE")) updateStatus("ONLINE", "online");
     }
@@ -64,6 +70,9 @@ client.onMessageArrived = (message) => {
         if (localStorage.getItem(`relay-name-${id}`) !== payload) {
             localStorage.setItem(`relay-name-${id}`, payload);
             applyCustomNames();
+            
+            // ADDED TO LOG:
+            saveLog(`Updated name for Relay ${id}: ${payload}`, "#3b82f6");
         }
     }
 
@@ -72,14 +81,9 @@ client.onMessageArrived = (message) => {
         clearTimeout(heartbeatTimeout);
         heartbeatTimeout = setTimeout(() => {
             updateStatus("OFFLINE (TIMEOUT)", "offline");
-            saveLog("Signal Lost", "#ef4444");
+            saveLog("Signal Lost: Heartbeat Timeout", "#ef4444");
         }, 65000);
     }
-};
-
-client.onConnectionLost = () => {
-    updateStatus("DISCONNECTED", "offline");
-    setTimeout(connectMQTT, 5000);
 };
 
 // --- 2. COMMANDS & UI ---
