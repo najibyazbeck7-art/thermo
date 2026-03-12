@@ -355,7 +355,7 @@ body {
 
 /* Temperature Display */
 .temp-display {
-    background: rgba(59, 130, 246, 0.1); /* Subtle blue glow */
+    background: #afc6ec; /* Subtle blue glow */
     border: 1px solid rgba(59, 130, 246, 0.2);
     padding: 4px 12px;
     border-radius: 12px;
