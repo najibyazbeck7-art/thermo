@@ -180,6 +180,27 @@ function shareDashboard() {
     }
 }
 
+
+// --- 4. SENSOR SIMULATION (Temporary) ---
+function simulateTemperature() {
+    // Generate a random number between 22.0 and 26.0
+    const mockTemp = (Math.random() * (26 - 22) + 22).toFixed(1);
+    const tempElement = document.getElementById('temp-value');
+    
+    if (tempElement) {
+        tempElement.innerText = mockTemp;
+    }
+}
+
+// Start simulation every 5 seconds
+setInterval(simulateTemperature, 5000);
+
+// Run once immediately on load
+window.addEventListener('DOMContentLoaded', () => {
+    simulateTemperature();
+    // ... your existing init code
+});
+
 // Init
 window.addEventListener('DOMContentLoaded', () => {
     applyCustomNames();

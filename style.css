@@ -353,5 +353,28 @@ body {
     letter-spacing: 1px;      /* Spaced out professional feel */
 }
 
+.temp-display {
+    background: rgba(59, 130, 246, 0.1); /* Subtle blue glow */
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 4px 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: baseline;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+#temp-value {
+    color: #3b82f6;
+    font-size: 1.2rem;
+}
+
+.temp-unit {
+    color: #64748b;
+    font-size: 0.8rem;
+    margin-left: 2px;
+}
+
+
 /* Utility class to show log when button is clicked */
 #debug-log.visible { display: block !important; }
